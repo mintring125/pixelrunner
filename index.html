@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pixel Runner - PE Quiz Edition</title>
+    <title>Pixel Runner - 체육 퀴즈 에디션</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
@@ -110,7 +110,7 @@
         #startScreen, #endScreen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -118,7 +118,7 @@
             text-align: center;
             z-index: 100;
             font-family: 'Press Start 2P', cursive;
-            border-radius: 5px; /* 화면 곡률 맞춤 */
+            border-radius: 5px;
         }
 
         .retro-title {
@@ -138,7 +138,7 @@
         }
 
         .press-start {
-            margin-top: 40px;
+            margin-top: 20px;
             font-size: 20px;
             color: #ffff00;
             animation: blink 0.8s infinite;
@@ -157,7 +157,7 @@
 
         #quizModal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 600px; background: rgba(0, 0, 0, 0.95);
+            width: 700px; max-width: 90%; background: rgba(0, 0, 0, 0.95);
             border: 4px solid #4CAF50; border-radius: 0;
             padding: 30px; text-align: center; color: white;
             display: none; z-index: 200;
@@ -165,13 +165,12 @@
             font-family: 'Courier New', monospace;
         }
         #quizModal h2 { margin-top: 0; color: #4CAF50; font-family: 'Press Start 2P', cursive; font-size: 20px; margin-bottom: 20px; }
-        #questionText { font-size: 20px; margin: 20px 0; font-weight: bold; line-height: 1.5; word-break: keep-all; }
+        #questionText { font-size: 20px; margin: 20px 0; font-weight: bold; line-height: 1.4; word-break: keep-all; }
         .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .option-btn {
             background: #333; border: 2px solid #fff; color: white;
             padding: 15px; font-size: 16px; cursor: pointer;
-            transition: 0.1s; font-family: inherit;
-            display: flex; align-items: center; justify-content: center;
+            transition: 0.1s; font-family: inherit; word-break: keep-all;
         }
         .option-btn:hover { background: #fff; color: #000; transform: scale(1.02); }
 
@@ -192,6 +191,37 @@
             position: absolute; top: 50px; left: 20px;
             font-family: 'Press Start 2P'; font-size: 12px; color: #aaa;
         }
+
+        /* 퀴즈 결과 리포트 스타일 */
+        #quizReport {
+            margin-bottom: 20px;
+            width: 80%;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid #555;
+        }
+        .report-item {
+            font-size: 12px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 4px;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: space-between;
+        }
+        .report-correct { color: #4CAF50; }
+        .report-wrong { color: #ff4444; }
+        .report-summary {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: #fff;
+            text-align: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -201,7 +231,7 @@
     
     <div id="uiLayer">
         <span id="scoreDisplay" class="hud-text">SCORE: 0</span>
-        <span id="livesDisplay" class="hud-text">❤️❤️❤️❤️❤️❤️❤️</span>
+        <span id="livesDisplay" class="hud-text">❤️❤️❤️❤️❤️</span>
     </div>
     <div id="quizProgress">QUIZ: 0/10</div>
 
@@ -214,8 +244,9 @@
     <div id="feedbackMsg"></div>
 
     <div id="startScreen">
-        <div class="retro-title">PIXEL<br>RUNNER<br><span style="font-size:20px; color:#fff;">PE CLASS EDITION</span></div>
+        <div class="retro-title">PIXEL<br>RUNNER</div>
         <div class="retro-desc">
+            <span style="color:#4CAF50;">4학년 체육: 경쟁 & 표현</span><br><br>
             PC: SPACE / DOWN<br>
             TABLET: USE BUTTONS BELOW
         </div>
@@ -223,8 +254,15 @@
     </div>
 
     <div id="endScreen" class="hidden">
-        <h1 id="endTitle" style="color:#ff4444; margin-bottom:30px;">GAME OVER</h1>
-        <p id="finalScore" style="margin-bottom:30px; font-size: 24px;">SCORE: 0</p>
+        <h1 id="endTitle" style="color:#ff4444; margin-bottom:10px; margin-top: 10px;">GAME OVER</h1>
+        <p id="finalScore" style="margin-bottom:15px; font-size: 20px;">SCORE: 0</p>
+        
+        <!-- 퀴즈 결과 리포트 영역 -->
+        <div id="quizReport">
+            <div class="report-summary">결과를 집계 중...</div>
+            <!-- 상세 목록이 여기에 들어갑니다 -->
+        </div>
+
         <button class="press-start" onclick="resetGame()">TRY AGAIN</button>
     </div>
 </div>
@@ -390,16 +428,11 @@
                 osc.start(now);
                 osc.stop(now + 0.3);
             } else if (type === 'coin') {
-                // [Feature] 몬스터볼 획득: 맑은 띠링 소리 (Coin sound)
                 osc.type = 'sine';
-                
-                // 두 개의 음을 빠르게 연주하여 "띠링" 효과 (B5 -> E6)
                 osc.frequency.setValueAtTime(987.77, now); // B5
                 osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
-                
                 gainNode.gain.setValueAtTime(0.1, now);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-                
                 osc.start(now);
                 osc.stop(now + 0.3);
             }
@@ -419,16 +452,15 @@
     const GRAVITY = 0.6;
     const MAX_QUIZ_COUNT = 10; 
     
-    // [Difficulty: Low] Start Speed 4 (Original 5)
-    let gameSpeed = 4;
+    let gameSpeed = 5;
     let score = 0;
-    // [Difficulty: Low] Lives 7 (Original 5)
-    let lives = 7;
+    let lives = 5;
     let isGameOver = false;
     let isPlaying = false;
     let isPaused = false; 
     let lastQuizTime = 0;
     let quizCount = 0; 
+    let quizResults = []; // 퀴즈 결과 저장용 배열
 
     const charImg = new Image();
     charImg.src = "https://postfiles.pstatic.net/MjAyNTExMjVfMTY5/MDAxNzY0MDQxMzI4MjIw.0qg3Ba7QymhoKYl6oFLh_1y4FjbrsifhLYenU7Pi_Eog.ScRyb20ebotqHukwCt9nnY4AHO9oO-t-N5sIKb4-_aEg.PNG/Gemini_Generated_Image_hav6ukhav6ukhav6-removebg-preview.png?type=w966"; 
@@ -445,21 +477,18 @@
     const bossImg = new Image();
     bossImg.src = "https://postfiles.pstatic.net/MjAyNTExMjVfMjA4/MDAxNzY0MDQxMzMwNzYz.lOHVTpqvhoHw7OkFiVVaKXuCRSocvHAaunw65BnlXxUg.YN-hXne9Jgf_gCX6Ps464IUWHBsgQldwZnoSXLKWb4Qg.PNG/Gemini_Generated_Image_d7101qd7101qd710-removebg-preview.png?type=w966";
 
-    // 4학년 체육 퀴즈 (스포츠 5문제 + 표현 5문제)
+    // 퀴즈 데이터 (체육 4학년: 경쟁-티볼/표현)
     const QUIZ_DATA = [
-      // Sports: 공 다루기
-      { q: "친구에게 공을 '멀리', '강하게' 보내고 싶을 때 사용하는 던지기 방법은?", o: ["언더핸드 스로", "오버핸드 스로", "굴리기", "제자리 놓기"], a: 1 },
-      { q: "가까운 거리의 친구에게 아래에서 위로 부드럽게 던지는 방법은?", o: ["오버핸드 스로", "언더핸드 스로", "사이드암 스로", "패대기 치기"], a: 1 },
-      { q: "공을 받을 때 올바른 자세는?", o: ["눈을 감는다", "공을 끝까지 본다", "손을 뒤로 숨긴다", "딴청을 피운다"], a: 1 },
-      { q: "공을 던질 때 발의 위치는?", o: ["던지는 손 반대쪽 발을 내민다", "던지는 손 같은 발을 내민다", "두 발을 모으고 뛴다", "누워서 던진다"], a: 0 },
-      { q: "수비수가 없는 빈 곳으로 공을 던지는 이유는?", o: ["우리 편이 받기 좋게 하려고", "상대방을 맞추려고", "공을 잃어버리려고", "심판에게 주려고"], a: 0 },
-      
-      // Expression: 움직임 (이동, 비이동, 조작)
-      { q: "몸을 장소 이동 없이 제자리에서 움직이는 '비이동 움직임'은?", o: ["달리기", "미끄러지기", "제자리에서 구부리기", "기어가기"], a: 2 },
-      { q: "다음 중 도구를 사용하는 '조작 움직임'은?", o: ["걷기", "공 드리블하기", "제자리 돌기", "앉았다 일어나기"], a: 1 },
-      { q: "표현 활동에서 '나무'를 몸으로 표현할 때 알맞은 움직임은?", o: ["빠르게 달리기", "공 던지기", "제자리에서 팔 벌려 서기", "앞구르기"], a: 2 },
-      { q: "술래잡기에서 술래를 피해 도망가는 것은 어떤 움직임일까요?", o: ["비이동 움직임", "이동 움직임", "조작 움직임", "감상하기"], a: 1 },
-      { q: "'제자리 멀리뛰기'에서 '뛰기' 동작은 어디에 속할까요?", o: ["이동 움직임", "비이동 움직임", "조작 움직임", "정지 동작"], a: 0 }
+      { q: "멀리 있는 친구에게 공을 빠르고 강하게 던져야 할 때, 가장 알맞은 방법은?", o: ["언더핸드 스로", "오버핸드 스로", "사이드암 스로", "체스트 패스"], a: 1 },
+      { q: "다음 중 '언더핸드 스로'에 대한 설명으로 옳은 것은?", o: ["가장 멀리 던질 때 쓴다", "어깨 위로 던진다", "가까운 곳에 부드럽게 던질 때 쓴다", "변화구를 던질 때만 쓴다"], a: 2 },
+      { q: "티볼 수비 중 주자를 아웃시키기 위해 1루로 빠르게 송구하려 한다. 가장 적절한 방법은?", o: ["오버핸드 스로로 강하게", "언더핸드 스로로 살살", "아무렇게나", "하늘 높이 던진다"], a: 0 },
+      { q: "새로운 공 던지기 기술을 배울 때 가장 바람직한 태도는?", o: ["실패할까 봐 안 한다", "내 맘대로 한다", "자신감을 갖고 적극적으로 한다", "숨어서 한다"], a: 2 },
+      { q: "공 던지기 방법에 대한 설명으로 틀린 것은?", o: ["오버핸드는 멀리 던질 때 유리", "언더핸드는 정확히 던질 때 유리", "사이드암은 옆으로 던진다", "모든 상황에서 한 가지만 쓴다"], a: 3 },
+      { q: "다음 중 몸의 위치를 옮기는 '이동 움직임'은?", o: ["제자리 팔 뻗기", "앉았다 일어서기", "앞으로 달려가기", "허리 굽혀 인사하기"], a: 2 },
+      { q: "다음 중 제자리에서 하는 '비이동 움직임'이 아닌 것은?", o: ["균형 잡기", "몸 비틀기", "제자리 높이 뛰기", "친구 손잡고 돌며 이동하기"], a: 3 },
+      { q: "도구를 사용하는 '조작 움직임'에 해당하는 것은?", o: ["노래하며 걷기", "발로 공 차기", "춤추기", "준비 체조하기"], a: 1 },
+      { q: "제자리에서 나비처럼 팔을 흔드는 동작은 어떤 움직임일까?", o: ["이동 움직임", "비이동 움직임", "조작 움직임", "복합 움직임"], a: 1 },
+      { q: "'달려가면서(ㄱ) 공을 받는(ㄴ)' 동작의 올바른 연결은?", o: ["ㄱ:비이동, ㄴ:조작", "ㄱ:이동, ㄴ:비이동", "ㄱ:이동, ㄴ:조작", "ㄱ:조작, ㄴ:이동"], a: 2 }
     ];
 
     const keys = { ArrowDown: false, Space: false };
@@ -835,43 +864,47 @@
             stopForestRunnerBGM();
             playBossBattleBGM();
         } else {
-            qTitle.innerText = "체육 퀴즈 (SPORTS QUIZ)";
+            qTitle.innerText = "BONUS QUIZ";
             qTitle.style.color = "#4CAF50";
             qTitle.style.animation = "none";
         }
 
         const quiz = QUIZ_DATA[quizCount % QUIZ_DATA.length]; 
-        qText.innerText = quiz.q;
+        qText.innerText = (quizCount + 1) + ". " + quiz.q;
         qOptions.innerHTML = ""; 
         
         quiz.o.forEach((opt, idx) => {
             const btn = document.createElement('div');
             btn.className = 'option-btn';
             btn.innerText = opt;
-            btn.onclick = () => handleQuizAnswer(idx === quiz.a);
+            btn.onclick = () => handleQuizAnswer(idx === quiz.a, quiz.q);
             qOptions.appendChild(btn);
         });
         
         modal.style.display = 'block';
     }
 
-    function handleQuizAnswer(isCorrect) {
+    function handleQuizAnswer(isCorrect, question) {
         const modal = document.getElementById('quizModal');
         modal.style.display = 'none';
         isPaused = false;
         lastQuizTime = Date.now();
+        
+        // 결과 기록
+        quizResults.push({ q: question, result: isCorrect });
+        
         quizCount++;
         document.getElementById('quizProgress').innerText = `QUIZ: ${quizCount}/${MAX_QUIZ_COUNT}`;
 
         if (isCorrect) {
             score += 100;
-            showFeedback("정답입니다! +100", "#4CAF50");
+            showFeedback("CORRECT! +100", "#4CAF50");
             player.invincible = true;
             player.invincibleTimer = 1000;
         } else {
             lives--;
             updateLives();
-            showFeedback("틀렸어요! LIFE -1", "#ff4444");
+            showFeedback("WRONG! LIFE -1", "#ff4444");
             player.invincible = true; 
             player.invincibleTimer = 1000;
             player.state = 'hit'; 
@@ -901,6 +934,28 @@
         document.getElementById('endTitle').innerText = title;
         document.getElementById('endTitle').style.color = color;
         document.getElementById('finalScore').innerText = "FINAL SCORE: " + Math.floor(score);
+        
+        // 퀴즈 결과 리포트 생성
+        const reportContainer = document.getElementById('quizReport');
+        const total = quizResults.length;
+        const correct = quizResults.filter(r => r.result).length;
+        const wrong = total - correct;
+        
+        let reportHTML = `<div class="report-summary">
+            총 ${total}문제 중 <span class="report-correct">${correct} 정답</span> / <span class="report-wrong">${wrong} 오답</span>
+        </div>`;
+        
+        quizResults.forEach((res, index) => {
+            const statusClass = res.result ? "report-correct" : "report-wrong";
+            const statusText = res.result ? "O" : "X";
+            reportHTML += `
+            <div class="report-item">
+                <span style="width: 85%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${index + 1}. ${res.q}</span>
+                <span class="${statusClass}" style="width: 15%; text-align: right; font-weight: bold;">${statusText}</span>
+            </div>`;
+        });
+        
+        reportContainer.innerHTML = reportHTML;
         screen.style.display = 'flex';
     }
     
@@ -947,7 +1002,7 @@
         ctx.font = "12px 'Press Start 2P', sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("규칙을 잘 지켜야 진정한 승자다!", bubbleX + bubbleW / 2, bubbleY + bubbleH / 2);
+        ctx.fillText("체육 이론 공부 좀 더 해야겠군!", bubbleX + bubbleW / 2, bubbleY + bubbleH / 2);
         ctx.restore();
     }
 
@@ -1029,7 +1084,7 @@
             if(checkCollision(player.getHitbox(), coin.getHitbox())) {
                 score += 10;
                 coin.markedForDeletion = true;
-                playSound('coin'); 
+                playSound('coin');
                 createParticles(coin.x + 15, coin.y + 15, 5, '#FFFFFF'); 
             }
         });
@@ -1057,7 +1112,6 @@
         isPlaying = true;
         lastTime = performance.now();
         lastQuizTime = Date.now();
-        // 1. 게임 시작 시 숲 BGM 재생
         playForestRunnerBGM();
         requestAnimationFrame(gameLoop);
     }
@@ -1068,20 +1122,18 @@
         isPlaying = true;
         lastTime = performance.now();
         lastQuizTime = Date.now();
-        // 2. 재시작 시 숲 BGM으로 리셋
         playForestRunnerBGM();
         requestAnimationFrame(gameLoop);
     }
 
     function resetVariables() {
         score = 0;
-        // [Difficulty: Low] Lives 7
-        lives = 7;
-        // [Difficulty: Low] Speed 4
-        gameSpeed = 4;
+        lives = 5;
+        gameSpeed = 5;
         obstacles = [];
         coins = [];
         particles = [];
+        quizResults = []; // 리셋
         isGameOver = false;
         isPaused = false;
         quizCount = 0;
